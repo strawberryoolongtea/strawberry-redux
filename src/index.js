@@ -1,52 +1,55 @@
 import { createStore } from "redux";
-const add = document.querySelector(".add");
-const minus = document.querySelector(".minus");
-const number = document.querySelector("span");
 
-number.innerText = 0;
+const form = document.querySelector("form");
+const input = document.querySelector("input");
+const ul = document.querySelector("ul");
 
-const ADD = "ADD";
-const MINUS = "MINUS";
+const ADD_TODO = "ADD_TODO";
+const DELETE_TODO = "DELETE_TODO";
 
-// * reducer
-const countModifier = (count = 0, action) => {
+const addTodo = (todo) => {
+  store.dispatch({ type: ADD_TODO, todo });
+};
+
+const deleteTodo = (e) => {
+  store.dispatch({ type: DELETE_TODO, id: parseInt(e.target.parentNode.id) });
+};
+
+const reducer = (state = [], action) => {
   switch (action.type) {
-    case ADD:
-      return count + 1;
-    case MINUS:
-      return count <= 0 ? 0 : count - 1;
+    case ADD_TODO:
+      return [{ todo: action.todo, id: Date.now() }, ...state];
+    case DELETE_TODO:
+      return state.filter((todo) => todo.id !== action.id);
     default:
-      return count;
+      return state;
   }
 };
 
-// * store
-const countStore = createStore(countModifier);
+const store = createStore(reducer);
 
-// * subscribe
-const onChange = () => (number.innerText = countStore.getState());
+const paintTodos = () => {
+  const todos = store.getState();
+  ul.innerHTML = "";
+  todos.forEach((todo) => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.innerText = "DEL";
+    btn.addEventListener("click", deleteTodo);
+    li.id = todo.id;
+    li.innerText = todo.todo;
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+};
 
-countStore.subscribe(onChange);
+store.subscribe(paintTodos);
 
-// * dispatch
-const handleAdd = () => countStore.dispatch({ type: ADD });
-const handelMinus = () => countStore.dispatch({ type: MINUS });
+const onSubmit = (e) => {
+  e.preventDefault();
+  const todo = input.value;
+  input.value = "";
+  addTodo(todo);
+};
 
-add.addEventListener("click", handleAdd);
-minus.addEventListener("click", handelMinus);
-
-// * vanilla counter
-// let count = 0;
-
-// const updateText = () => (number.innerText = count);
-
-// const handleAdd = () => {
-//   count = count + 1;
-//   updateText();
-// };
-// const handleMinus = () => {
-//   count = count - 1;
-//   updateText();
-// };
-// add.addEventListener("click", handleAdd);
-// minus.addEventListener("click", handleMinus);
+form.addEventListener("submit", onSubmit);
